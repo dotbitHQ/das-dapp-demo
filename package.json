@@ -1,0 +1,53 @@
+{
+  "name": "das-dapp-demo",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "start:pm2": "nuxt build && pm2 reload ecosystem.config.js --only das-dapp-demo",
+    "generate": "nuxt generate",
+    "analyze": "nuxt build --analyze",
+    "lint:js": "eslint --ext \".js,.vue\" --ignore-path .gitignore .",
+    "lint": "npm run lint:js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "abc-copy": "^0.0.11",
+    "abcwallet": "^1.7.0",
+    "axios": "^0.21.1",
+    "core-js": "^3.8.2",
+    "decimal.js": "^10.2.1",
+    "grapheme-splitter": "^1.0.4",
+    "nuxt": "^2.15.2",
+    "nuxt-i18n": "^6.20.6",
+    "vee-validate": "^3.4.5",
+    "vuex-persistedstate": "^3.2.0",
+    "walletlink": "^2.0.3"
+  },
+  "devDependencies": {
+    "@nuxt/types": "^2.15.2",
+    "@nuxt/typescript-build": "^2.1.0",
+    "@nuxtjs/eslint-config-typescript": "^6.0.0",
+    "@nuxtjs/eslint-module": "^3.0.2",
+    "@vue/test-utils": "^1.1.2",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^26.6.3",
+    "bn.js": "^4.12.0",
+    "eslint": "^7.18.0",
+    "eslint-plugin-nuxt": "^2.0.0",
+    "eslint-plugin-vue": "^7.8.0",
+    "fibers": "^5.0.0",
+    "jest": "^26.6.3",
+    "sass": "^1.32.8",
+    "sass-loader": "^10.1.1",
+    "ts-jest": "^26.5.4",
+    "vue-jest": "^3.0.4"
+  },
+  "engines": {
+    "node": ">=12.20.0",
+    "npm": ">=6.14.8"
+  }
+}

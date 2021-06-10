@@ -1,0 +1,49 @@
+// font
+@font-face {
+  font-family: 'Barlow-Medium';
+  src: url('static/fonts/Barlow-Medium.ttf');
+}
+$body-font-family: "PingFangSC-Regular", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, /* english */
+"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans CN", sans-serif;	/* chinese */
+$barlow-medium: "Barlow-Medium";
+$monospace-font-family: Courier, FreeMono, monospace;
+
+// main color
+$white: #FFFFFF;
+$background: #E8EEF4;
+$primary-color: #667FFF;
+$primary-hover-color: #586CDD;
+$normal-color: #F7F7F7;
+$normal-hover-color: #EBEBEB;
+$success-color: #22C493;
+$success-hover-color: #10A376;
+$error-color: #DF4B46;
+$error-hover-color: #B83E39;
+$disabled-color: #A0A1AB;
+$assist-color: #11142D;
+$focus-color: #2D64F6;
+$container-border-color: #E4E4E4;
+
+// font color
+$primary-font-color: #11142D;
+$assist-font-color: #808191;
+$third-font-color: #B2B3BD;
+$success-font-color: #22C493;
+$link-font-color: #2D64F6;
+$warn-font-color: #FFA800;
+$error-font-color: #DF4A46;
+
+// layout
+$pc-layout-container-width: 532px;
+$pc-layout-container-min-height: calc(100vh - 48px);
+$pc-layout-container-box-shadow: 0 6px 8px 0 rgb(223 231 227 / 86%);
+
+// nav
+$bottom-nav-height: 48px;
+
+// container
+$container-outer-box-shadow: 0 20px 16px 0 rgb(43 54 77 / 16%);
+$container-border: 1px solid $container-border-color;
+
+// split line
+$split-line: 1px #979797 dashed;
