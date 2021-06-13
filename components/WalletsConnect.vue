@@ -5,6 +5,9 @@
     :closeButton="loggedIn"
     @close="onClose"
   >
+    <div class="wallets-connect__test-tip">
+      {{ i18n.t('请先将钱包切换至 Goerli 测试网络再连接') }}
+    </div>
     <ul class="wallets-connect__select-wallet-list">
       <li
         v-for="wallet in walletList"
@@ -38,6 +41,7 @@ import Iconfont from '~/components/icon/Iconfont.vue'
 import { IAlertOptions } from '~/plugins/alert'
 import { WALLETS } from '~/constant'
 import { ME_KEYS } from '~/store/me'
+import { isMobile } from '~/modules/tools'
 
 export default Vue.extend({
   name: 'WalletsConnect',
@@ -72,28 +76,19 @@ export default Vue.extend({
       default: () => ({} as Store<any>)
     }
   },
-  data () {
-    return {
-      walletList: [
-        {
-          name: WALLETS.metaMask,
-          logo: '/images/components/metamask-wallet-logo.png',
-          supported: true
-        },
-        {
-          name: WALLETS.abcWallet,
-          logo: '/images/components/abcwallet-logo.png',
-          supported: false
-        },
+  computed: {
+    ...mapState({
+      me: ME_KEYS.namespace
+    }),
+    loggedIn (): boolean {
+      return this.me.loggedIn
+    },
+    walletList (): { name: string, logo: string, supported: boolean }[] {
+      const list = [
         {
           name: WALLETS.walletConnect,
           logo: '/images/components/walletConnect-wallet-logo.png',
-          supported: false
-        },
-        {
-          name: WALLETS.coinbaseWallet,
-          logo: '/images/components/wallet_coinbase.png',
-          supported: false
+          supported: !window.ethereum || !isMobile()
         },
         {
           name: WALLETS.tronLink,
@@ -101,14 +96,16 @@ export default Vue.extend({
           supported: false
         }
       ]
-    }
-  },
-  computed: {
-    ...mapState({
-      me: ME_KEYS.namespace
-    }),
-    loggedIn (): boolean {
-      return this.me.loggedIn
+
+      if (!isMobile() || (window.ethereum && isMobile())) {
+        list.unshift({
+          name: WALLETS.metaMask,
+          logo: '/images/components/metamask-wallet-logo.png',
+          supported: true
+        })
+      }
+
+      return list
     }
   },
   methods: {
@@ -125,6 +122,7 @@ export default Vue.extend({
           this.$emit('metaMaskConnect')
           break
         case WALLETS.walletConnect:
+          localStorage.removeItem('walletconnect')
           this.$emit('walletConnectConnect')
           break
         case WALLETS.coinbaseWallet:
@@ -144,6 +142,14 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 @import 'assets/variables';
+
+.wallets-connect__test-tip {
+  padding: 10px;
+  color: $error-font-color;
+  font-weight: bold;
+  background: rgba(223, 74, 70, 0.1);
+  border-radius: 10px;
+}
 
 .wallets-connect__select-wallet-list {
   padding: 24px 0 34px 0;

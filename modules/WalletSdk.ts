@@ -1,14 +1,12 @@
 import { Context } from '@nuxt/types'
 import Vue from 'vue'
-import ABCWallet from 'abcwallet'
 import WalletsConnect from '~/components/WalletsConnect.vue'
 import { ME_KEYS } from '~/store/me'
 import { DOMAIN, WALLETS } from '~/constant'
 import errno from '~/constant/errno'
-import { CHAIN_ID, CKB, ETH, TRON } from '~/constant/chain'
-import { isABCWallet, loadScript, shrinkUnit } from '~/modules/tools'
+import { CHAIN_ID, ETH, TRON } from '~/constant/chain'
+import { loadScript } from '~/modules/tools'
 import config from '~/config'
-import { oneChainCKB, oneChainCore } from '~/modules/one-chain'
 
 interface IMetaMaskJsonRpcResponse {
   id: string | undefined;
@@ -75,9 +73,6 @@ export default class WalletSdk {
     this.walletsConnectInstance.$on('close', () => {
       this.closeWalletsConnect()
     })
-    this.walletsConnectInstance.$on('abcWalletConnect', () => {
-      this.abcWalletConnect()
-    })
     this.walletsConnectInstance.$on('metaMaskConnect', () => {
       this.metaMaskConnect()
     })
@@ -122,16 +117,14 @@ export default class WalletSdk {
     const { store } = this.context.app
     const _walletName = store?.state.me.connectedAccount.walletName
     switch (_walletName) {
-      case WALLETS.abcWallet:
-        return await this.abcWalletSendTrx(data)
       case WALLETS.metaMask:
         return await this.metaMaskSendTrx(data)
       case WALLETS.walletConnect:
         return await this.walletConnectSendTrx(data)
       case WALLETS.coinbaseWallet:
         return await this.coinbaseWalletSendTrx(data)
-      // case WALLETS.tronLink:
-      //   return await this.tronLinkSendTrx(data)
+      case WALLETS.tronLink:
+        return await this.tronLinkSendTrx(data)
     }
   }
 
@@ -145,42 +138,6 @@ export default class WalletSdk {
     }
   }
 
-  async abcWalletConnect () {
-    const { i18n, $alert, store } = this.context.app
-    if (isABCWallet()) {
-      const _refreshPageAfterLogin = this.refreshPageAfterLogin()
-      try {
-        const accounts = (await ABCWallet.request({
-          namespace: CKB.symbol.toLowerCase(),
-          method: 'offerIdentity',
-          params: {}
-        })).addresses
-        store?.commit(ME_KEYS.setConnectedAccount, {
-          address: accounts[0],
-          chain: CKB,
-          walletName: WALLETS.abcWallet
-        })
-        this.closeWalletsConnect()
-        _refreshPageAfterLogin(accounts[0])
-      }
-      catch (err) {
-        console.error(err)
-        if (err.code !== errno.abcWalletUserCancelTheAction) {
-          $alert({
-            title: i18n.t('Error'),
-            message: `${err.code}: ${err.message}`
-          })
-        }
-      }
-    }
-    else {
-      $alert({
-        title: i18n.t('Error'),
-        message: (i18n.t('请安装 ABC Wallet!') as string)
-      })
-    }
-  }
-
   async metaMaskConnect () {
     const { ethereum } = window
     const { i18n, $alert, store } = this.context.app
@@ -188,6 +145,13 @@ export default class WalletSdk {
       const _refreshPageAfterLogin = this.refreshPageAfterLogin()
       try {
         const accounts = await ethereum.enable()
+        if (Number(ethereum.networkVersion) !== 5) {
+          $alert({
+            title: i18n.t('Error'),
+            message: (i18n.t('请先将钱包切换至 Goerli 测试网络再连接') as string)
+          })
+          return
+        }
         store?.commit(ME_KEYS.setConnectedAccount, {
           address: accounts[0],
           chain: ETH,
@@ -235,7 +199,17 @@ export default class WalletSdk {
             })
             return
           }
-          const { accounts } = payload.params[0]
+          const { accounts, chainId } = payload.params[0]
+          if (Number(chainId) !== 5) {
+            $alert({
+              title: i18n.t('Error'),
+              message: (i18n.t('请先将钱包切换至 Goerli 测试网络再连接') as string)
+            })
+            setTimeout(() => {
+              localStorage.removeItem('walletconnect')
+            }, 500)
+            return
+          }
           store?.commit(ME_KEYS.setConnectedAccount, {
             address: accounts[0],
             chain: ETH,
@@ -247,7 +221,15 @@ export default class WalletSdk {
         await this.walletConnector.createSession()
       }
       else {
-        const { accounts } = this.walletConnector
+        const { accounts, chainId } = this.walletConnector
+        if (Number(chainId) !== 5) {
+          $alert({
+            title: i18n.t('Error'),
+            message: (i18n.t('请先将钱包切换至 Goerli 测试网络再连接') as string)
+          })
+          localStorage.removeItem('walletconnect')
+          return
+        }
         store?.commit(ME_KEYS.setConnectedAccount, {
           address: accounts[0],
           chain: ETH,
@@ -363,13 +345,18 @@ export default class WalletSdk {
   }
 
   async walletConnectSignData (data: string): Promise<Error | string | undefined> {
-    await this.walletsConnect()
+    await this.walletConnectConnect()
     const { store } = this.context.app
     const _signAccount = store?.state.me.connectedAccount.address
     return new Promise((resolve, reject) => {
       this.walletConnector
-        .signPersonalMessage([data, _signAccount])
+        .signPersonalMessage(['0x' + data, _signAccount])
         .then((result: string) => {
+          let v = Number.parseInt(result.slice(-2), 16)
+          if (v >= 27) {
+            v -= 27
+          }
+          result = result.slice(2, -2) + v.toString(16).padStart(2, '0')
           resolve(result)
         })
         .catch((err: any) => {
@@ -419,61 +406,6 @@ export default class WalletSdk {
     })
   }
 
-  async abcWalletSendTrx ({ to, value, data }: ISendTrxParams): Promise<Error | string | undefined> {
-    await this.abcWalletConnect()
-    const { store } = this.context.app
-    const _from = store?.state.me.connectedAccount.address
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
-      try {
-        const CKB_RPC_NODE = new oneChainCore.RPCNode({
-          chainId: 'testnet',
-          chainType: 'CKB',
-          baseUrl: 'https://test-ckb.abcwallet.com/api'
-        })
-
-        const provider = new oneChainCKB.CKB({
-          rpcnode: CKB_RPC_NODE,
-          keypairs: [],
-          logger: console
-        })
-
-        console.log(shrinkUnit(value, CKB.decimals))
-
-        const trxObj = await provider.buildTransaction({
-          froms: [{
-            address: _from
-          }],
-          tos: [{
-            address: to,
-            value
-          }],
-          changeAddress: _from,
-          memos: []
-        })
-        console.log('trxObj', trxObj)
-
-        trxObj.edit({
-          fee: 100000000
-        })
-
-        const signedTrx = await (ABCWallet as any).ckb.sign({
-          rawTransaction: trxObj.rawTransaction,
-          unspents: trxObj.inputs
-        })
-        console.log('Signed transaction:', signedTrx)
-
-        const trxId = await this.context.app.$services.sendTrx(signedTrx.transaction)
-        // console.log('Transaction ID:', trxId)
-        resolve(trxId)
-      }
-      catch (err) {
-        console.error(err)
-        reject(err)
-      }
-    })
-  }
-
   async metaMaskSendTrx ({ to, value, data }: ISendTrxParams): Promise<Error | string | undefined> {
     await this.metaMaskConnect()
     await loadScript('/js/web3.min.js', 'web3js')
@@ -491,7 +423,7 @@ export default class WalletSdk {
           value: _value,
           data: _data,
           gas: Web3.utils.numberToHex('30000'),
-          gasPrice: Web3.utils.numberToHex('100000000000')
+          gasPrice: Web3.utils.numberToHex('700000000000')
         }]
       }, (err: Error, res: IMetaMaskJsonRpcResponse) => {
         if (err) {
@@ -510,7 +442,7 @@ export default class WalletSdk {
     const { Web3 } = window
     const { store } = this.context.app
     const _from = store?.state.me.connectedAccount.address
-    const _data = Web3.utils.utf8ToHex(data)
+    const _data = data ? Web3.utils.utf8ToHex(data) : data
     const _value = Web3.utils.numberToHex(value)
     return new Promise((resolve, reject) => {
       this.walletConnector.sendTransaction({
@@ -524,7 +456,6 @@ export default class WalletSdk {
         })
         .catch((err: Error) => {
           console.error(err)
-          console.error(err.message)
           reject(err)
         })
     })
@@ -558,7 +489,26 @@ export default class WalletSdk {
     })
   }
 
-  // async tronLinkSendTrx ({ to, value, data }: ISendTrxParams): Promise<Error | string | undefined> {
-  //
-  // }
+  tronLinkSendTrx ({ to, value, data }: ISendTrxParams): Promise<Error | string | undefined> {
+    this.tronLinkConnect()
+    const { tronWeb } = window
+    const { store } = this.context.app
+    const _from = store?.state.me.connectedAccount.address
+
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise(async (resolve, reject) => {
+      try {
+        // const tx = await tronWeb.transactionBuilder.sendTrx('TN9RRaXkCFtTXRso2GdTZxSxxwufzxLQPP', 10, 'TTSFjEG3Lu9WkHdp4JrWYhbGP6K1REqnGQ')
+        const tx = await tronWeb.transactionBuilder.sendTrx(to, value, _from)
+        // const signedTx = await tronWeb.trx.sign(tronWeb.toHex(tx))
+        const signedTx = await tronWeb.trx.sign(tx)
+        const trxId = await tronWeb.trx.sendRawTransaction(signedTx)
+        resolve(trxId)
+      }
+      catch (err: any) {
+        console.error(err)
+        reject(new Error(err))
+      }
+    })
+  }
 }

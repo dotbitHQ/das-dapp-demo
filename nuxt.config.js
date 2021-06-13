@@ -22,11 +22,7 @@ export default {
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
     ],
     script: [{
-      src: '/js/lodash.min.js'
-    }, {
-      src: '/js/all-in-one.es5.umd.js'
-    }, {
-      src: '//at.alicdn.com/t/font_2342047_j37o1ld0a7.js',
+      src: '//at.alicdn.com/t/font_2342047_piatg6rxe.js',
       async: true
     }]
   },

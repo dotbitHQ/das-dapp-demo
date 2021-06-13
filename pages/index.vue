@@ -9,7 +9,7 @@
       <LoginStatusCard />
     </div>
     <h1 class="page-index__title">
-      {{ $t('DAS 转账') }}
+      {{ $t('DAS 转账（演示）') }}
     </h1>
     <div class="page-index__desc">
       {{ $t('使用更易读的 DAS 账号进行加密货币转账') }}
@@ -110,6 +110,8 @@
           <TextInput
             v-model="amount"
             inputmode="decimal"
+            type="number"
+            step="0.000000000000000001"
             placeholder="0"
             :errorMessages="errors"
           />
@@ -123,6 +125,8 @@
           <TextInput
             v-model="amount"
             inputmode="decimal"
+            type="number"
+            step="0.000000000000000001"
             placeholder="0"
             :errorMessages="errors"
           />
@@ -279,7 +283,7 @@ export default Vue.extend({
         if (res && res.account_data) {
           this.parsingRecords = res.account_data.records
           this.currentChainParsingRecords = this.parsingRecords.filter((record: IRecord) => {
-            return record.type === ParsingRecordType.address && record.key === String(this.paymentToken.chainId)
+            return record.type === ParsingRecordType.address && record.key === String(this.paymentToken.symbol.toLowerCase())
           })
           if (this.currentChainParsingRecords.length > 0) {
             this.showParsingRecords = true
