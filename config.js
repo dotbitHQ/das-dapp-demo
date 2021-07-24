@@ -7,6 +7,6 @@ module.exports = {
   host: '0.0.0.0',
   port: process.env.PORT || 9800,
   domain: 'https://dapp-demo.da.services/',
-  servicesApi: 'https://dapp-demo-api.da.services/v1',
-  identiconServe: 'https://identicons.da.services/identicon/'
+  servicesApi: 'https://indexer.da.systems',
+  identiconServe: 'https://identicons.da.systems/identicon/'
 }

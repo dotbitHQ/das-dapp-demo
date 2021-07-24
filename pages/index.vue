@@ -9,7 +9,8 @@
       <LoginStatusCard />
     </div>
     <h1 class="page-index__title">
-      {{ $t('DAS 转账（演示）') }}
+      {{ $t('DAS 转账') }}
+      <span class="page-index__title__tip">{{ $t('(仅用于演示)') }}</span>
     </h1>
     <div class="page-index__desc">
       {{ $t('使用更易读的 DAS 账号进行加密货币转账') }}
@@ -35,7 +36,7 @@
         </label>
         <div class="page-index__input">
           <TextInput
-            v-model="address"
+            v-model.trim="address"
             :placeholder="$t('DAS 账号或地址')"
             :errorMessages="addressErrors"
             @input="onChangeAddress"
@@ -108,7 +109,7 @@
           rules="required|minAmount:61"
         >
           <TextInput
-            v-model="amount"
+            v-model.trim="amount"
             inputmode="decimal"
             type="number"
             step="0.000000000000000001"
@@ -123,7 +124,7 @@
           :rules="`required|minAmount:${shrinkUnit(1, paymentToken.decimals, paymentToken.decimals)}`"
         >
           <TextInput
-            v-model="amount"
+            v-model.trim="amount"
             inputmode="decimal"
             type="number"
             step="0.000000000000000001"
@@ -231,13 +232,17 @@ export default Vue.extend({
 
       try {
         this.submitLoading = true
-        await this.$walletSdk.sendTrx({
-          to: this.toAddress,
-          value: expandUnit(this.amount, this.paymentToken.decimals)
+        // await this.$walletSdk.sendTrx({
+        //   to: this.toAddress,
+        //   value: expandUnit(this.amount, this.paymentToken.decimals)
+        // })
+        // this.$toast('👌 ' + this.$t('交易已发送'))
+        // this.amount = ''
+        // ;(this.$refs.transferForm as HTMLFormElement).reset()
+        this.$alert({
+          title: this.$t('提示'),
+          message: 'DAS 转账只用于展示 DAS 特性，并未发送任何交易，将来会有更多钱包支持。'
         })
-        this.$toast('👌 ' + this.$t('交易已发送'))
-        this.amount = ''
-        ;(this.$refs.transferForm as HTMLFormElement).reset()
       }
       catch (err) {
         console.error(err)
@@ -283,7 +288,10 @@ export default Vue.extend({
         if (res && res.account_data) {
           this.parsingRecords = res.account_data.records
           this.currentChainParsingRecords = this.parsingRecords.filter((record: IRecord) => {
-            return record.type === ParsingRecordType.address && record.key === String(this.paymentToken.symbol.toLowerCase())
+            const keys = record.key.split('.')
+            const type = keys[0]
+            const key = keys[1]
+            return type === ParsingRecordType.address && key === String(this.paymentToken.symbol.toLowerCase())
           })
           if (this.currentChainParsingRecords.length > 0) {
             this.showParsingRecords = true
@@ -339,6 +347,10 @@ export default Vue.extend({
   font-weight: bold;
   color: $primary-font-color;
   text-align: center;
+}
+
+.page-index__title__tip {
+  color: $error-color
 }
 
 .page-index__desc {

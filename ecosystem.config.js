@@ -28,7 +28,6 @@ module.exports = {
    * http://pm2.keymetrics.io/docs/usage/application-declaration/
    */
   apps: [
-    generateApp('production', config.port),
-    generateApp('test', config.port + 1)
+    generateApp('production', config.port)
   ]
 }

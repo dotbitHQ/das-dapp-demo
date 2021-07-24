@@ -145,13 +145,13 @@ export default class WalletSdk {
       const _refreshPageAfterLogin = this.refreshPageAfterLogin()
       try {
         const accounts = await ethereum.enable()
-        if (Number(ethereum.networkVersion) !== 5) {
-          $alert({
-            title: i18n.t('Error'),
-            message: (i18n.t('请先将钱包切换至 Goerli 测试网络再连接') as string)
-          })
-          return
-        }
+        // if (Number(ethereum.networkVersion) !== 5) {
+        //   $alert({
+        //     title: i18n.t('Error'),
+        //     message: (i18n.t('请先将钱包切换至 Goerli 测试网络再连接') as string)
+        //   })
+        //   return
+        // }
         store?.commit(ME_KEYS.setConnectedAccount, {
           address: accounts[0],
           chain: ETH,
